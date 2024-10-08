@@ -1,0 +1,68 @@
+GBNF
+arithmetic_grammar="""
+root  ::= (expr "=" ws term "\n")+
+expr  ::= term ([-+*/] term)*
+term  ::=  num | "(" ws expr ")" ws
+num   ::= [0-9]+ ws
+ws    ::= [ \t\n]*
+"""
+
+uvl_grammar="""
+start := featureModel
+
+featureModel := namespace? "\n"? includes? "\n"? imports? "\n"? features? "\n"? constraints? EOF
+
+includes := "include" "\n" INDENT includeLine* DEDENT
+includeLine := languageLevel "\n"
+
+namespace := "namespace" reference
+
+imports := "imports" "\n" INDENT importLine* DEDENT
+importLine := reference ("as" reference)? "\n"
+
+features := "features" "\n" INDENT feature DEDENT
+
+group := "or" groupSpec | "alternative" groupSpec | "optional" groupSpec | "mandatory" groupSpec | CARDINALITY groupSpec
+
+groupSpec := "\n" INDENT feature+ DEDENT
+
+feature := featureType? reference featureCardinality? attributes? "\n" (INDENT group+ DEDENT)?
+
+featureCardinality := "cardinality" CARDINALITY
+
+attributes := "{" (attribute ("," attribute)*)? "}"
+
+attribute := valueAttribute | constraintAttribute
+
+valueAttribute := key value?
+key := id
+value := BOOLEAN | FLOAT | INTEGER | STRING | attributes | vector
+vector := "[" (value ("," value)*)? "]"
+
+constraintAttribute := "constraint" constraint | "constraints" constraintList
+
+constraintList := "[" (constraint ("," constraint)*)? "]"
+
+constraints := "constraints" "\n" INDENT constraintLine* DEDENT
+constraintLine := constraint "\n"
+
+constraint := equation | reference | "(" constraint ")" | "!" constraint | constraint "&" constraint | constraint "|" constraint | constraint "=>" constraint | constraint "<=>" constraint
+
+equation := expression "==" expression | expression "<" expression | expression ">" expression | expression "<=" expression | expression ">=" expression | expression "!=" expression
+
+expression := FLOAT | INTEGER | STRING | aggregateFunction | reference | "(" expression ")" | expression "+" expression | expression "-" expression | expression "*" expression | expression "/" expression
+
+aggregateFunction := "sum" "(" (reference ",")? reference ")" | "avg" "(" (reference ",")? reference ")" | stringAggregateFunction | numericAggregateFunction
+
+stringAggregateFunction := "len" "(" reference ")"
+
+numericAggregateFunction := "floor" "(" reference ")" | "ceil" "(" reference ")"
+
+reference := (id ".")* id
+id := ID_STRICT | ID_NOT_STRICT
+featureType := "String" | "Integer" | "Boolean" | "Real"
+
+languageLevel := majorLevel ("." (minorLevel | "*"))?
+majorLevel := "Boolean" | "Arithmetic" | "Type"
+minorLevel := "group-cardinality" | "feature-cardinality" | "aggregate-function" | "string-constraints"
+"""
