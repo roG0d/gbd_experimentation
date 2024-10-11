@@ -1,8 +1,38 @@
-
-import time
-start_time = time.perf_counter()
-
 from vllm import LLM, SamplingParams
+
+uvl_grammar = r"""
+?start: _NL* featuremodel
+
+featuremodel: "features" _NL [_INDENT feature+ _DEDENT]
+feature: NAME _NL (_INDENT group+ _DEDENT)?
+
+group: "or" groupspec          -> or_group
+| "alternative" groupspec -> alternative_group
+| "optional" groupspec    -> optional_group
+| "mandatory" groupspec   -> mandatory_group
+| cardinality groupspec   -> cardinality_group
+
+groupspec: _NL _INDENT feature+ _DEDENT
+
+cardinality: "[" INT (".." (INT | "*"))? "]"
+
+%import common.INT
+%import common.CNAME -> NAME
+%import common.WS_INLINE
+%declare _INDENT _DEDENT
+%ignore WS_INLINE
+
+_NL: /(\r?\n[\t ]*)+/
+"""
+
+uvl_prompt=f"""
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+You are a helpful AI assistant for creating gramatically and sintactically expression given this specific grammar: {uvl_grammar}<|eot_id|>
+<|start_header_id|>user<|end_header_id|>
+Write new expressions separated by \n:
+<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+"""
 
 arithmetic_grammar = """
 ?start: comparison
@@ -19,7 +49,6 @@ arithmetic_grammar = """
 
 %import common.NUMBER
 %ignore " "  // Ignore spaces
-
 """
 
 arithmetic_prompt="Rewrite 5*5 as another expression"
@@ -43,20 +72,43 @@ number: "1" | "2"
 """
 sql_prompt="Generate a sql state that select col_1 from table_1 where it is equals to 1"
 
+import time
+start_time = time.perf_counter()
+grammar = uvl_grammar
 llm = LLM('study-hjt/Meta-Llama-3-70B-Instruct-GPTQ-Int8', gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=False, quantization="gptq")
+
 sampling_params = SamplingParams(
         max_tokens=100,
         temperature=1,
         top_p=0.95,
     )
-outputs = llm.generate(
-    prompts=arithmetic_prompt_fewshots,
-    sampling_params=sampling_params,
-    guided_options_request=dict(guided_grammar=arithmetic_grammar))
 
+outputs = llm.generate(
+    prompts=uvl_prompt,
+    sampling_params=sampling_params,
+    guided_options_request=dict(guided_grammar=grammar))
 
 elapsed_time = time.perf_counter() - start_time
-print(f'Elapsed time: {elapsed_time} seconds')
+print(f'Elapsed time for inference: {elapsed_time} seconds')
+
+from lark import Lark, exceptions
+from lark.indenter import Indenter
+
+
+def test(generation: str, parser):
+    print(parser.parse(generation).pretty())
+
+class TreeIndenter(Indenter):
+    NL_type = '_NL'
+    OPEN_PAREN_types = []
+    CLOSE_PAREN_types = []
+    INDENT_type = '_INDENT'
+    DEDENT_type = '_DEDENT'
+    tab_len = 8
+
+parser = Lark(grammar, parser='lalr', postlex=TreeIndenter())
+print("Grammar is well-written.")
+
 
 for output in outputs:
     prompt = output.prompt
@@ -64,11 +116,10 @@ for output in outputs:
     generated_text = output.outputs[0].text
     print(f"Prompt: {prompt!r}, Generated text without parser: {generated_text!r}")
 
-    """
-    # use Lark to parse the output, and make sure it's a valid parse tree
-    from lark import Lark
-    parser = Lark(arithmetic_grammar)
-    parser.parse(generated_text)
+    try:
+        # Parse a generation
+        test(generation=generated_text, parser=parser)
 
-    print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
-    """
+    except:
+        print("Generation not grammatically valid")
+

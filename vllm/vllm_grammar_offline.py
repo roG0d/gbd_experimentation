@@ -197,12 +197,12 @@ sampling_params = SamplingParams(
         top_p=0.95,
     )
 outputs = llm.generate(
-    prompts=uvl_prompt,
+    prompts=arithmetic_prompt_fewshots,
     sampling_params=sampling_params,
-    guided_options_request=dict(guided_grammar=uvl_grammar))
+    guided_options_request=dict(guided_grammar=arithmetic_grammar))
 
 elapsed_time = time.perf_counter() - start_time
-print(f'Elapsed time: {elapsed} seconds')
+print(f'Elapsed time: {elapsed_time} seconds')
 for output in outputs:
     prompt = output.prompt
 

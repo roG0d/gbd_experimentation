@@ -1,0 +1,6 @@
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+You are a helpful AI assistant for creating gramatically and sintactically expression given this specific grammar: {uvl_grammar}<|eot_id|>
+<|start_header_id|>user<|end_header_id|>
+Write new expressions separated by \n:
+<|eot_id|><|start_header_id|>assistant<|end_header_id|>

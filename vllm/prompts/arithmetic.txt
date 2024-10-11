@@ -1,0 +1,7 @@
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+You are a helpful AI assistant for creating gramatically, equivalent and correct arithmetical expression<|eot_id|>
+<|start_header_id|>user<|end_header_id|>
+Rewrite the following expressions into equivalent ones as show in this example(5*5)=(5+5+5+5+5)=(25*1)=(5*3)+(5*2).\n(3*3)=\n(3*4*5)=\n(7*3)=
+<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+

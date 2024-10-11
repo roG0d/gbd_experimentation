@@ -1,0 +1,14 @@
+?start: comparison
+
+?comparison: expression ("=" expression)?
+
+?expression: term (("+" | "-") term)*
+
+?term: factor (("*" | "/") factor)*
+
+?factor: NUMBER
+       | "-" factor
+       | "(" comparison ")"
+
+%import common.NUMBER
+%ignore " "  // Ignore spaces
