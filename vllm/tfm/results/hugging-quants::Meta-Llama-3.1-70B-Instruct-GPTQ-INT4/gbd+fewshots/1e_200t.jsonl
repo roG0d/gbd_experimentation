@@ -1,0 +1,1 @@
+{"model": "hugging-quants::Meta-Llama-3.1-70B-Instruct-GPTQ-INT4", "experiment_type": "gbd+fewshots", "samples": 1, "max_tokens": 200, "seeds": [424533559246], "elapsed_time_gen": [157.94767570495605], "syntax_validation": [1], "semantic_validation": [1]}

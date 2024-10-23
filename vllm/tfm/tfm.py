@@ -8,10 +8,18 @@ import sympy as sp
 import json
 import os
 
-SAMPLES = 100
-MODEL = "study-hjt/Meta-Llama-3-70B-Instruct-GPTQ-Int8"
-MODEL_FOLDERNAME = "study-hjt::Meta-Llama-3-70B-Instruct-GPTQ-Int8"
+SAMPLES = 1
+#MODEL = "study-hjt/Meta-Llama-3-70B-Instruct-GPTQ-Int8"
+MODEL = "hugging-quants/Meta-Llama-3.1-70B-Instruct-GPTQ-INT4"
 
+# Model loading
+# llama-3-70 quantized INT8
+#llm = LLM(MODEL, gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=False, quantization="gptq") # 
+
+# llama-3.1-70B INT4
+llm = LLM(MODEL, gpu_memory_utilization=1.0, tensor_parallel_size=8, enforce_eager=False, quantization="gptq", enable_chunked_prefill=False, cpu_offload_gb=70.0, max_model_len=10384) # LLama 3.1 70B
+
+#llm = LLM('meta-llama/Llama-3.2-1B-Instruct', gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=False, dtype="half")
 
 # Auxiliar functions
 class Generation:
@@ -91,11 +99,6 @@ def gen_preproc(generation:str):
 
     return eot_id_comparison
 
-
-
-# llama-3-70 quantized
-llm = LLM(MODEL, gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=False, quantization="gptq")
-#llm = LLM('meta-llama/Llama-3.2-1B-Instruct', gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=False, dtype="half")
 
 tokens = [50, 100, 200]
 experiments = ["gbd","nogbd","gbd+fewshots"]
@@ -182,8 +185,6 @@ for experiment_type in experiments:
 
         grammar = arithmetic_grammar
 
-
-
         # Samples generations
         #seeds = [randint(1,SAMPLES*10e9) for i in range(SAMPLES)]
         seeds = fixed_seeds()
@@ -247,14 +248,20 @@ for experiment_type in experiments:
 
         # Save and load results
         # Write the jsonl and serialize the gens
-        with open(f"./samples/{MODEL_FOLDERNAME}/{EXPERIMENT_TYPE}/{SAMPLES}e_{MAX_TOKENS}t.jsonl", 'w') as file:
+
+        model_foldername = MODEL.replace("/","::")
+        os.makedirs(f"./samples/{model_foldername}/{EXPERIMENT_TYPE}/", exist_ok=True)
+        os.makedirs(f"./results/{model_foldername}/{EXPERIMENT_TYPE}/", exist_ok=True)
+
+        
+        with open(f"./samples/{model_foldername}/{EXPERIMENT_TYPE}/{SAMPLES}e_{MAX_TOKENS}t.jsonl", 'w') as file:
             for gen in only_generations:
                 json_line = json.dumps(gen.__dict__)
                 file.write(json_line + "\n")
 
         # Read the jsonl and deserialize back
         generation_from_file = []
-        with open(f"./samples/{MODEL_FOLDERNAME}/{EXPERIMENT_TYPE}/{SAMPLES}e_{MAX_TOKENS}t.jsonl", "r") as file:
+        with open(f"./samples/{model_foldername}/{EXPERIMENT_TYPE}/{SAMPLES}e_{MAX_TOKENS}t.jsonl", "r") as file:
             for line in file:
                 gen = json.loads(line, object_hook=gen_encoder)
                 generation_from_file.append(gen)
