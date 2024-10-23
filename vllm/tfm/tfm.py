@@ -97,7 +97,7 @@ def gen_preproc(generation:str):
 llm = LLM(MODEL, gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=False, quantization="gptq")
 #llm = LLM('meta-llama/Llama-3.2-1B-Instruct', gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=False, dtype="half")
 
-tokens = [1, 2, 3]
+tokens = [50, 100, 200]
 experiments = ["gbd","nogbd","gbd+fewshots"]
 for experiment_type in experiments:
 

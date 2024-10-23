@@ -1,4 +1,7 @@
 from vllm import LLM, SamplingParams
+from dotenv import load_dotenv
+
+load_dotenv()
 
 uvl_grammar = r"""
 ?start: _NL* featuremodel
@@ -74,17 +77,19 @@ sql_prompt="Generate a sql state that select col_1 from table_1 where it is equa
 
 import time
 start_time = time.perf_counter()
-grammar = uvl_grammar
+grammar = arithmetic_grammar
+# llama-3-70 quantized
 llm = LLM('study-hjt/Meta-Llama-3-70B-Instruct-GPTQ-Int8', gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=False, quantization="gptq")
+#llm = LLM('meta-llama/Llama-3.2-1B-Instruct', gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=False, dtype="half")
 
 sampling_params = SamplingParams(
-        max_tokens=100,
+        max_tokens=10,
         temperature=1,
         top_p=0.95,
     )
 
 outputs = llm.generate(
-    prompts=uvl_prompt,
+    prompts=arithmetic_prompt,
     sampling_params=sampling_params,
     guided_options_request=dict(guided_grammar=grammar))
 
@@ -108,6 +113,10 @@ class TreeIndenter(Indenter):
 
 parser = Lark(grammar, parser='lalr', postlex=TreeIndenter())
 print("Grammar is well-written.")
+
+print(f"len for outputs{str(len(outputs))}")
+print(f"outputs{str(outputs[0].outputs[0].text)}")
+print(f"outputs{str(outputs[0])}")
 
 
 for output in outputs:
