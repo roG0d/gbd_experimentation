@@ -8,18 +8,22 @@ import sympy as sp
 import json
 import os
 
-SAMPLES = 1
-#MODEL = "study-hjt/Meta-Llama-3-70B-Instruct-GPTQ-Int8"
-MODEL = "hugging-quants/Meta-Llama-3.1-70B-Instruct-GPTQ-INT4"
+load_dotenv()
 
 # Model loading
+SAMPLES = 1
+
 # llama-3-70 quantized INT8
-#llm = LLM(MODEL, gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=False, quantization="gptq") # 
+MODEL = "study-hjt/Meta-Llama-3-70B-Instruct-GPTQ-Int8"
+llm = LLM(MODEL, gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=True, quantization="gptq") 
+
+# Llama-3-8B
+#MODEL = "meta-llama/Meta-Llama-3-8B-Instruct"
+#llm = LLM(MODEL, gpu_memory_utilization=1, tensor_parallel_size=8, enforce_eager=False, dtype="half") 
 
 # llama-3.1-70B INT4
-llm = LLM(MODEL, gpu_memory_utilization=1.0, tensor_parallel_size=8, enforce_eager=False, quantization="gptq", enable_chunked_prefill=False, cpu_offload_gb=70.0, max_model_len=10384) # LLama 3.1 70B
-
-#llm = LLM('meta-llama/Llama-3.2-1B-Instruct', gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=False, dtype="half")
+#MODEL = "hugging-quants/Meta-Llama-3.1-70B-Instruct-GPTQ-INT4"
+#llm = LLM(MODEL, gpu_memory_utilization=1.0, tensor_parallel_size=8, enforce_eager=False, quantization="gptq", enable_chunked_prefill=False, cpu_offload_gb=70.0, max_model_len=10384) # LLama 3.1 70B
 
 # Auxiliar functions
 class Generation:
