@@ -95,7 +95,6 @@ if __name__ == "__main__":
         monitor_thread.join()
 
         # Output the collected GPU usage and memory usage data
-
         print("GPU Usage (%):", results["gpu_usage"])
         print("Memory Usage (MB):", results["memory_usage"])
 

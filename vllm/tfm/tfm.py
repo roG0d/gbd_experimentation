@@ -7,8 +7,49 @@ import time
 import sympy as sp
 import json
 import os
+import threading
+from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetUtilizationRates, nvmlDeviceGetMemoryInfo
 
 load_dotenv()
+# Initialize NVML
+nvmlInit()
+
+# Function to monitor GPU usage
+def monitor_gpu(device_id, stop_event, interval=0.01, results=None):
+    # Handle to GPU
+    handle = nvmlDeviceGetHandleByIndex(device_id)
+    
+    # Lists to store GPU usage metrics
+    gpu_usage = []
+    memory_usage = []
+    
+    start_time = time.time()
+    while not stop_event.is_set():  # Continue until stop_event is set:
+        # Get GPU utilization
+        util = nvmlDeviceGetUtilizationRates(handle)
+        mem_info = nvmlDeviceGetMemoryInfo(handle)
+        
+        # Append data to lists
+        gpu_usage.append(util.gpu)         # GPU usage in %
+        memory_usage.append(mem_info.used / 1024 ** 2)  # Memory usage in MB
+        
+        # Wait for the next interval
+        time.sleep(interval)
+
+    if results is not None:
+        results['gpu_usage'] = gpu_usage
+        results['memory_usage'] = memory_usage
+
+
+stop_event = threading.Event()
+
+results = {}
+gpu_id = 0
+interval = 1
+
+# Start the GPU load test and monitoring in parallel
+monitor_thread = threading.Thread(target=monitor_gpu, args=(gpu_id, stop_event, interval, results))
+monitor_thread.start()
 
 # Model loading
 SAMPLES = 1
@@ -103,9 +144,9 @@ def gen_preproc(generation:str):
 
     return eot_id_comparison
 
+tokens = [50]
+experiments = ["gbd"]
 
-tokens = [50, 100, 200]
-experiments = ["gbd","nogbd","gbd+fewshots"]
 for experiment_type in experiments:
 
     EXPERIMENT_TYPE = experiment_type
@@ -232,6 +273,9 @@ for experiment_type in experiments:
             elapsed_time = time.perf_counter() - start_time
             print(f'Elapsed time for generation nº{i}: {elapsed_time} seconds')
 
+            # Stop event for the monitoring thread
+            stop_event.set()
+
             elapsed_time = None
             gen_text = None
             try:
@@ -249,6 +293,15 @@ for experiment_type in experiments:
             only_generations.append(Generation(seed=seed, elapsed_time=elapsed_time, gen=gen_text))
 
 
+        # Wait for monitoring to finish
+        monitor_thread.join()
+
+        # Output the collected GPU usage and memory usage data
+        print("GPU Usage (%):", results["gpu_usage"])
+        print("Memory Usage (MB):", results["memory_usage"])
+
+        print("Max GPU usage: ", max(results["gpu_usage"]))
+        print("Max Memory Usage (MB): ", max(results["memory_usage"]))
 
         # Save and load results
         # Write the jsonl and serialize the gens
