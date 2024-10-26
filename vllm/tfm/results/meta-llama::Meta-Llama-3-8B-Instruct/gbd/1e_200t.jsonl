@@ -1,1 +1,0 @@
-{"model": "meta-llama::Meta-Llama-3-8B-Instruct", "experiment_type": "gbd", "samples": 1, "max_tokens": 200, "seeds": [424533559246], "elapsed_time_gen": [10.736610651016235], "syntax_validation": [1], "semantic_validation": [1]}

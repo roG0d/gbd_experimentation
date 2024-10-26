@@ -1,1 +1,0 @@
-{"model": "study-hjt::Meta-Llama-3-70B-Instruct-GPTQ-Int8", "experiment_type": "nogbd", "samples": 2, "max_tokens": 100, "seeds": [424533559246, 978212965549], "elapsed_time_gen": [2.559346914291382, 2.552354097366333], "syntax_validation": [1, 1], "semantic_validation": [1, 1]}

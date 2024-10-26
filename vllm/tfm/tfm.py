@@ -45,22 +45,22 @@ stop_event = threading.Event()
 
 results = {}
 gpu_id = 0
-interval = 1
+interval = 0.1
 
 # Start the GPU load test and monitoring in parallel
 monitor_thread = threading.Thread(target=monitor_gpu, args=(gpu_id, stop_event, interval, results))
 monitor_thread.start()
 
 # Model loading
-SAMPLES = 1
+SAMPLES = 100
 
 # llama-3-70 quantized INT8
-MODEL = "study-hjt/Meta-Llama-3-70B-Instruct-GPTQ-Int8"
-llm = LLM(MODEL, gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=True, quantization="gptq") 
+#MODEL = "study-hjt/Meta-Llama-3-70B-Instruct-GPTQ-Int8"
+#llm = LLM(MODEL, gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=True, quantization="gptq") 
 
 # Llama-3-8B
-#MODEL = "meta-llama/Meta-Llama-3-8B-Instruct"
-#llm = LLM(MODEL, gpu_memory_utilization=1, tensor_parallel_size=8, enforce_eager=False, dtype="half") 
+MODEL = "meta-llama/Meta-Llama-3-8B-Instruct"
+llm = LLM(MODEL, gpu_memory_utilization=1, tensor_parallel_size=8, enforce_eager=False, dtype="half") 
 
 # llama-3.1-70B INT4
 #MODEL = "hugging-quants/Meta-Llama-3.1-70B-Instruct-GPTQ-INT4"
@@ -144,8 +144,8 @@ def gen_preproc(generation:str):
 
     return eot_id_comparison
 
-tokens = [50]
-experiments = ["gbd"]
+tokens = [50, 100, 200]
+experiments = ["gbd","nogbd","gbd+fewshots"]
 
 for experiment_type in experiments:
 
@@ -303,10 +303,14 @@ for experiment_type in experiments:
         print("Max GPU usage: ", max(results["gpu_usage"]))
         print("Max Memory Usage (MB): ", max(results["memory_usage"]))
 
+        model_foldername = MODEL.replace("/","::")
+        os.makedirs(f"./results/{model_foldername}/{EXPERIMENT_TYPE}/gpu/", exist_ok=True)
+        with open(f"./results/{model_foldername}/{EXPERIMENT_TYPE}/gpu/{SAMPLES}e_{MAX_TOKENS}t_gpu.jsonl", 'w') as file:
+                json_line = json.dumps(results)
+                file.write(json_line + "\n")
+
         # Save and load results
         # Write the jsonl and serialize the gens
-
-        model_foldername = MODEL.replace("/","::")
         os.makedirs(f"./samples/{model_foldername}/{EXPERIMENT_TYPE}/", exist_ok=True)
         os.makedirs(f"./results/{model_foldername}/{EXPERIMENT_TYPE}/", exist_ok=True)
 
