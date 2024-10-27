@@ -55,12 +55,12 @@ monitor_thread.start()
 SAMPLES = 100
 
 # llama-3-70 quantized INT8
-#MODEL = "study-hjt/Meta-Llama-3-70B-Instruct-GPTQ-Int8"
-#llm = LLM(MODEL, gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=True, quantization="gptq") 
+MODEL = "study-hjt/Meta-Llama-3-70B-Instruct-GPTQ-Int8"
+llm = LLM(MODEL, gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=True, quantization="gptq") 
 
 # Llama-3-8B
-MODEL = "meta-llama/Meta-Llama-3-8B-Instruct"
-llm = LLM(MODEL, gpu_memory_utilization=1, tensor_parallel_size=8, enforce_eager=False, dtype="half") 
+#MODEL = "meta-llama/Meta-Llama-3-8B-Instruct"
+#llm = LLM(MODEL, gpu_memory_utilization=1, tensor_parallel_size=8, enforce_eager=False, dtype="half") 
 
 # llama-3.1-70B INT4
 #MODEL = "hugging-quants/Meta-Llama-3.1-70B-Instruct-GPTQ-INT4"
