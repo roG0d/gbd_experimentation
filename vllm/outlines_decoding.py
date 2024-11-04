@@ -1,41 +1,58 @@
-from outlines import models, generate
-from vllm import LLM, SamplingParams
-from outlines.serve.vllm import JSONLogitsProcessor
-import datetime as dt
+import outlines.generate as generate
+import outlines.models as models
 
-# Outdated vllm not using Outlines
+# from https://github.com/dottxt-ai/outlines/blob/main/examples/cfg.py
 
-arithmetic_grammar = """
-    ?start: sum
+arithmetic_grammar = r"""
+?start: comparison
 
-    ?sum: product
-        | sum "+" product   -> add
-        | sum "-" product   -> sub
+?comparison: expression ("=" expression)?
 
-    ?product: atom
-        | product "*" atom  -> mul
-        | product "/" atom  -> div
+?expression: term (("+" | "-") term)*
 
-    ?atom: NUMBER           -> number
-         | "-" atom         -> neg
-         | "(" sum ")"
+?term: factor (("*" | "/") factor)*
 
-    %import common.NUMBER
-    %import common.WS_INLINE
+?factor: NUMBER
+       | "-" factor
+       | "(" comparison ")"
 
-    %ignore WS_INLINE
+%import common.NUMBER
+%ignore " "  // Ignore spaces
+"""
+uvl_grammar = r"""
+    ?start: _NL* featuremodel
+
+featuremodel: "features" _NL [_INDENT feature+ _DEDENT]
+feature: NAME _NL (_INDENT group+ _DEDENT)?
+
+group: "or" groupspec          -> or_group
+| "alternative" groupspec -> alternative_group
+| "optional" groupspec    -> optional_group
+| "mandatory" groupspec   -> mandatory_group
+| cardinality groupspec   -> cardinality_group
+
+groupspec: _NL _INDENT feature+ _DEDENT
+
+cardinality: "[" INT (".." (INT | "*"))? "]"
+
+%import common.INT
+%import common.CNAME -> NAME
+%import common.WS_INLINE
+%declare _INDENT _DEDENT
+%ignore WS_INLINE
+_NL: /(\r?\n[\t ]*)+/
 """
 
-
-model = models.vllm('study-hjt/Meta-Llama-3-70B-Instruct-GPTQ-Int8', gpu_memory_utilization=0.9, dtype="half", tensor_parallel_size=8, enforce_eager=True, quantization="gptq")
-t0 = dt.datetime.now()
-generator = generate.cfg(model, arithmetic_grammar)
-
-result = generator("Question: How can you write 5*5 using addition?\nAnswer:")
-print(result)
-# 5+5+5+5+5
-
-time_elapsed = (dt.datetime.now() - t0).total_seconds()
-print(f"Generation took {time_elapsed:,} seconds.")
-
-
+model = models.transformers("meta-llama/Meta-Llama-3-8B-Instruct")
+batch_size = 10
+print(model.model.config)
+for grammar in  [arithmetic_grammar]:
+    generator = generate.cfg(model, grammar)
+    sequences = generator([" "] * batch_size)
+    for seq in sequences:
+        try:
+            parse = generator.fsm.parser.parse(seq)
+            assert parse is not None
+            print("SUCCESS", seq)
+        except Exception:  # will also fail if goes over max_tokens / context window
+            print("FAILURE", seq)

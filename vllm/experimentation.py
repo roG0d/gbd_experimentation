@@ -52,8 +52,8 @@ arithmetic_grammar = """
 
 %import common.NUMBER
 %ignore " "  // Ignore spaces
-"""
 
+"""
 arithmetic_prompt="Rewrite 5*5 as another expression"
 
 arithmetic_prompt_fewshots="""
@@ -78,6 +78,9 @@ sql_prompt="Generate a sql state that select col_1 from table_1 where it is equa
 import time
 start_time = time.perf_counter()
 grammar = arithmetic_grammar
+# llama-3 8B
+#MODEL = "meta-llama/Meta-Llama-3-8B-Instruct"
+
 # llama-3-70 quantized
 llm = LLM('study-hjt/Meta-Llama-3-70B-Instruct-GPTQ-Int8', gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=False, quantization="gptq")
 #llm = LLM('meta-llama/Llama-3.2-1B-Instruct', gpu_memory_utilization=0.9, tensor_parallel_size=8, enforce_eager=False, dtype="half")
