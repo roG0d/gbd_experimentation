@@ -36,30 +36,16 @@ _NL: /(\r?\n[\t ]*)+/
 """
 
 input_text = r"""
-namespace Server
-
 features
-  Server {abstract}
-    mandatory
-      FileSystem
-        or // with cardinality: [1..*]
-          NTFS
-          APFS
-          EXT4
-      OperatingSystem {abstract}
+    b
+        or
+            a
+            c
+    c
         alternative
-          Windows
-          macOS
-          Debian
-    optional
-      Logging	{
-      default,
-      log_level "warn" // Feature Attribute
-    }
-
-constraints
-  Windows => NTFS
-  macOS => APFS
+            test
+        [1..2]
+            pepe
 """
 
 # Create the parser with Earley for detailed error reporting
