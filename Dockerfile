@@ -5,10 +5,13 @@ FROM pytorch/pytorch:2.4.1-cuda12.4-cudnn9-runtime
 # Set up environment variables
 ENV PATH /opt/conda/bin:$PATH
 
+# makes sure the shell used for subsequent RUN commands is exactly Bash, as located in /bin.
 SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
+    nvtop \
+    sudo \
     kmod \
     wget \
     vim \
@@ -20,11 +23,13 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     libsm6 \
     libxrender1 \
-    libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+    libssl-dev
+    # Cleanup command to remove the apt cache and reduce the image size: # IMPORTANT: Enforces using sudo apt update when entering the container
+    #&& rm -rf /var/lib/apt/lists/*
 
 # Create rog0d user
 RUN useradd -ms /bin/bash rog0d && echo "rog0d:rog0d" | chpasswd && usermod -aG sudo rog0d
+# From here user rog0d user to execute the following commands
 USER rog0d
 WORKDIR /home/rog0d
 
@@ -59,12 +64,14 @@ RUN ~/miniconda3/envs/vllm/bin/pip install vllm
 # Ensure the container uses NVIDIA runtime for CUDA access
 LABEL com.nvidia.volumes.needed="nvidia_driver"
 
-# docker run commands
+# Run apt get update if you wanna install new packages
+
+# docker run commands:
 # docker run -it --rm --runtime=nvidia --gpus all vllm nvidia-smi
 # docker run -it --rm --runtime=nvidia --gpus all vllm bash
 
 # Initialize the container with complete config, userspace and shared disk:
 # docker run -it -d -v ./gbd_experimentation:/home/rog0d/gbd_experimentation --runtime=nvidia --gpus all --name=vllm vllm124 bash 
 
-# Initialize the container with complete config, userspace:
+# Initialize the container with complete config, in the userspace:
 # docker run -it -d --runtime=nvidia --gpus all --name=vllm vllm124 bash 
