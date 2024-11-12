@@ -73,5 +73,5 @@ LABEL com.nvidia.volumes.needed="nvidia_driver"
 # Initialize the container with complete config, userspace and shared disk:
 # docker run -it -d -v ./gbd_experimentation:/home/rog0d/gbd_experimentation --runtime=nvidia --gpus all --name=vllm vllm124 bash 
 
-# Initialize the container with complete config, in the userspace:
+# Initialize the container with complete config, and .env in the userspace:
 # docker run -it -d --runtime=nvidia --gpus all --name=vllm vllm124 bash 
