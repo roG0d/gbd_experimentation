@@ -1,5 +1,5 @@
 # Use NVIDIA's official CUDA 12.4 base image
-FROM pytorch/pytorch:2.4.1-cuda12.4-cudnn9-runtime
+FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
 #FROM ubuntu:22.04
 
 # Set up environment variables
@@ -9,9 +9,9 @@ ENV PATH /opt/conda/bin:$PATH
 SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
-# llamacpp gcc compilation tools
 RUN apt-get update && apt-get install -y \
-    build-essential \
+    # sglang required gcc compiler
+    build-essential \ 
     nvtop \
     sudo \
     kmod \
@@ -53,29 +53,29 @@ RUN source ~/miniconda3/bin/activate
 #RUN sh ~/nvidia-driver/NVIDIA-Linux-x86_64-550.127.05.run
 
 # Create a new Conda environment and activate it
-RUN ~/miniconda3/bin/conda create -n llamacpp python=3.10 -y
+RUN ~/miniconda3/bin/conda create -n sglang python=3.10 -y
 RUN echo "source ~/miniconda3/bin/activate" > ~/.bashrc
-RUN echo "conda activate llamacpp" >> ~/.bashrc
+RUN echo "conda activate sglang" >> ~/.bashrc
 
 # Install CUDA toolkit within the conda environment
-RUN ~/miniconda3/bin/conda install cuda -n llamacpp -c nvidia/label/cuda-12.4.0 -y
+RUN ~/miniconda3/bin/conda install cuda -n sglang -c nvidia/label/cuda-12.4.0 -y
+
+# Install sglang 
+RUN ~/miniconda3/envs/sglang/bin/pip install "sglang[all]"
+RUN ~/miniconda3/envs/sglang/bin/pip install flashinfer -i https://flashinfer.ai/whl/cu121/torch2.4/
+
 
 # Ensure the container uses NVIDIA runtime for CUDA access
 LABEL com.nvidia.volumes.needed="nvidia_driver"
 
-# Install llamacpp 
-#ENV CMAKE_ARGS="-DLLAVA_BUILD=OFF -DGGML_CUDA=on"
-ENV LD_LIBRARY_PATH "/home/rog0d/miniconda3/envs/llamacpp/lib"
-RUN ~/miniconda3/envs/llamacpp/bin/pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu124
-
 # Run apt get update if you wanna install new packages
 
 # docker run commands:
-# docker run -it --rm --runtime=nvidia --gpus all llamacpp nvidia-smi
-# docker run -it --rm --runtime=nvidia --gpus all llamacpp bash
+# docker run -it --rm --runtime=nvidia --gpus all vllm nvidia-smi
+# docker run -it --rm --runtime=nvidia --gpus all vllm bash
 
 # Initialize the container with complete config, userspace and shared disk:
-# docker run -it -d -v ~/.cache/huggingface:/root/.cache/huggingface --runtime=nvidia --gpus all --name=llamacpp llamacpp bash 
+# docker run -it -d -v ./gbd_experimentation:/home/rog0d/gbd_experimentation --runtime=nvidia --gpus all --name=vllm vllm124 bash 
 
 # Initialize the container with complete config, and .env in the userspace:
-# docker run -it -d --runtime=nvidia --gpus all --name=vllm llamacpp bash 
+# docker run -it -d --runtime=nvidia --gpus all --name=sglang sglang bash 
